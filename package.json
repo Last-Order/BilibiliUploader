@@ -1,0 +1,19 @@
+{
+  "name": "bilibiliuploader",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^8.0.23",
+    "typescript": "^2.4.2"
+  },
+  "dependencies": {
+    "qiniu": "^7.0.6",
+    "request": "^2.81.0"
+  }
+}
