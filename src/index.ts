@@ -3,9 +3,13 @@ import {ReadStream} from "fs";
 const fs = require("fs");
 const request = require("request");
 
+export interface UploadOptions{
+    complete?: Function, // 完成时回调
+    chunkComplate?: Function // 分块上传时每块完成时回调
+}
+
 class BilibiliUploader {
     uploadToken: string; // 上传凭证
-    key: string; // 文件名
     __ak: string = "MYqzXnGLWp0v7so0hgtj6WCk0gnqSoe4MzqHe5Gk";
     __bucket: string = "bvcupcdn-hd";
     chunkSize: number = 1024 * 1024 * 4; // 4M
@@ -22,8 +26,7 @@ class BilibiliUploader {
         this.uploadToken = uploadToken;
         this.isInited = true;
     }
-    upload(path: string, key: string) {
-        this.key = key;
+    upload(path: string, options: UploadOptions = {}) {
         this.fileSize = fs.statSync(path).size;
         this.chunkCount = Math.ceil(this.fileSize / this.chunkSize);
         let fileStream: ReadStream = fs.createReadStream(path);
@@ -46,6 +49,12 @@ class BilibiliUploader {
                     fileStream.pause();
                     let response: any = await this.makeBlock(Buffer.concat(readBuffers), readLength);
                     ctxs.push(JSON.parse(response).ctx);
+                    if (options.chunkComplate){
+                        options.chunkComplate({
+                            finishedChunks: this.nowChunk,
+                            totalChunks: this.chunkCount
+                        })
+                    }
                     fileStream.resume();
                     readLength = 0;
                     readBuffers = [];
@@ -53,6 +62,9 @@ class BilibiliUploader {
                         try{
                             console.log("正发送整合指令");
                             await this.makeFile(ctxs);
+                            if (options.complete){
+                                options.complete();
+                            }
                             console.log("上传完成");
                         }
                         catch (e){

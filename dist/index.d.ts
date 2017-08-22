@@ -1,7 +1,10 @@
 /// <reference types="node" />
+export interface UploadOptions {
+    complete?: Function;
+    chunkComplate?: Function;
+}
 declare class BilibiliUploader {
     uploadToken: string;
-    key: string;
     __ak: string;
     __bucket: string;
     chunkSize: number;
@@ -14,7 +17,7 @@ declare class BilibiliUploader {
      * @param {string} uploadToken 上传凭证
      */
     constructor(uploadToken: string);
-    upload(path: string, key: string): void;
+    upload(path: string, options?: UploadOptions): void;
     /**
      * mkblk
      * @param {Buffer} buffer

@@ -26,8 +26,7 @@ class BilibiliUploader {
         this.uploadToken = uploadToken;
         this.isInited = true;
     }
-    upload(path, key) {
-        this.key = key;
+    upload(path, options = {}) {
         this.fileSize = fs.statSync(path).size;
         this.chunkCount = Math.ceil(this.fileSize / this.chunkSize);
         let fileStream = fs.createReadStream(path);
@@ -47,6 +46,12 @@ class BilibiliUploader {
                     fileStream.pause();
                     let response = yield this.makeBlock(Buffer.concat(readBuffers), readLength);
                     ctxs.push(JSON.parse(response).ctx);
+                    if (options.chunkComplate) {
+                        options.chunkComplate({
+                            finishedChunks: this.nowChunk,
+                            totalChunks: this.chunkCount
+                        });
+                    }
                     fileStream.resume();
                     readLength = 0;
                     readBuffers = [];
@@ -54,6 +59,9 @@ class BilibiliUploader {
                         try {
                             console.log("正发送整合指令");
                             yield this.makeFile(ctxs);
+                            if (options.complete) {
+                                options.complete();
+                            }
                             console.log("上传完成");
                         }
                         catch (e) {
