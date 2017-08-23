@@ -44,7 +44,7 @@ class BilibiliUploader {
                     this.nowChunk++;
                     console.log(`正在上传第 ${this.nowChunk}/${this.chunkCount} 分块 `);
                     fileStream.pause();
-                    let response = yield this.makeBlock(Buffer.concat(readBuffers), readLength);
+                    let response = yield this.makeBlock(options.host || "upload.qbox.me", Buffer.concat(readBuffers), readLength);
                     ctxs.push(JSON.parse(response).ctx);
                     if (options.chunkComplate) {
                         options.chunkComplate({
@@ -58,7 +58,7 @@ class BilibiliUploader {
                     if (totalReadLength === this.fileSize) {
                         try {
                             console.log("正发送整合指令");
-                            yield this.makeFile(ctxs);
+                            yield this.makeFile(options.host || "upload.qbox.me", ctxs);
                             if (options.complete) {
                                 options.complete();
                             }
@@ -67,25 +67,32 @@ class BilibiliUploader {
                         catch (e) {
                             console.error("整合文件出错");
                             console.log(e);
+                            if (options.error) {
+                                options.error(e);
+                            }
                         }
                     }
                 }
                 catch (e) {
                     console.error(`上传第 ${this.nowChunk} 时错误!`);
                     console.log(e);
+                    if (options.error) {
+                        options.error(e);
+                    }
                 }
             }
         }));
     }
     /**
      * mkblk
+     * @param {string} host
      * @param {Buffer} buffer
      * @param {number} blockSize
      * @returns {Promise<any>}
      */
-    makeBlock(buffer, blockSize) {
+    makeBlock(host, buffer, blockSize) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-            let url = `https://upload.qbox.me/mkblk/${blockSize}`;
+            let url = `http://${host}/mkblk/${blockSize}`;
             request({
                 url: url,
                 headers: {
@@ -105,10 +112,15 @@ class BilibiliUploader {
             });
         }));
     }
-    makeFile(ctxs) {
+    /**
+     * 整合文件
+     * @param host
+     * @param ctxs
+     */
+    makeFile(host, ctxs) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             request({
-                url: `https://upload.qbox.me/mkfile/${this.fileSize}`,
+                url: `http://${host}/mkfile/${this.fileSize}`,
                 headers: {
                     "Content-Type": "text/plain",
                     "Content-Length": ctxs.join(',').length,

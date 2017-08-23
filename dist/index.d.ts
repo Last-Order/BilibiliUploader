@@ -1,7 +1,9 @@
 /// <reference types="node" />
 export interface UploadOptions {
+    host?: string;
     complete?: Function;
     chunkComplate?: Function;
+    error?: Function;
 }
 declare class BilibiliUploader {
     uploadToken: string;
@@ -20,11 +22,17 @@ declare class BilibiliUploader {
     upload(path: string, options?: UploadOptions): void;
     /**
      * mkblk
+     * @param {string} host
      * @param {Buffer} buffer
      * @param {number} blockSize
      * @returns {Promise<any>}
      */
-    makeBlock(buffer: Buffer, blockSize: number): Promise<{}>;
-    makeFile(ctxs: string[]): Promise<{}>;
+    makeBlock(host: string, buffer: Buffer, blockSize: number): Promise<{}>;
+    /**
+     * 整合文件
+     * @param host
+     * @param ctxs
+     */
+    makeFile(host: string, ctxs: string[]): Promise<{}>;
 }
 export default BilibiliUploader;

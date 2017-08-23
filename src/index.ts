@@ -4,6 +4,7 @@ const fs = require("fs");
 const request = require("request");
 
 export interface UploadOptions{
+    host?: string,
     complete?: Function, // 完成时回调
     chunkComplate?: Function, // 分块上传时每块完成时回调
     error?: Function
@@ -48,7 +49,7 @@ class BilibiliUploader {
                     this.nowChunk++;
                     console.log(`正在上传第 ${this.nowChunk}/${this.chunkCount} 分块 `);
                     fileStream.pause();
-                    let response: any = await this.makeBlock(Buffer.concat(readBuffers), readLength);
+                    let response: any = await this.makeBlock(options.host || "upload.qbox.me", Buffer.concat(readBuffers), readLength);
                     ctxs.push(JSON.parse(response).ctx);
                     if (options.chunkComplate){
                         options.chunkComplate({
@@ -62,7 +63,7 @@ class BilibiliUploader {
                     if (totalReadLength === this.fileSize){
                         try{
                             console.log("正发送整合指令");
-                            await this.makeFile(ctxs);
+                            await this.makeFile(options.host || "upload.qbox.me", ctxs);
                             if (options.complete){
                                 options.complete();
                             }
@@ -90,13 +91,14 @@ class BilibiliUploader {
 
     /**
      * mkblk
+     * @param {string} host
      * @param {Buffer} buffer
      * @param {number} blockSize
      * @returns {Promise<any>}
      */
-    makeBlock(buffer: Buffer, blockSize: number){
+    makeBlock(host: string, buffer: Buffer, blockSize: number){
         return new Promise(async (resolve, reject) => {
-            let url = `https://upload.qbox.me/mkblk/${blockSize}`;
+            let url = `http://${host}/mkblk/${blockSize}`;
             request({
                 url: url,
                 headers: {
@@ -116,10 +118,15 @@ class BilibiliUploader {
             })
         })
     }
-    makeFile(ctxs: string[]){
+    /**
+     * 整合文件
+     * @param host 
+     * @param ctxs 
+     */
+    makeFile(host: string, ctxs: string[]){
         return new Promise(async (resolve, reject) => {
             request({
-                url: `https://upload.qbox.me/mkfile/${this.fileSize}`,
+                url: `http://${host}/mkfile/${this.fileSize}`,
                 headers: {
                     "Content-Type": "text/plain",
                     "Content-Length": ctxs.join(',').length,
