@@ -5,7 +5,8 @@ const request = require("request");
 
 export interface UploadOptions{
     complete?: Function, // 完成时回调
-    chunkComplate?: Function // 分块上传时每块完成时回调
+    chunkComplate?: Function, // 分块上传时每块完成时回调
+    error?: Function
 }
 
 class BilibiliUploader {
@@ -70,12 +71,18 @@ class BilibiliUploader {
                         catch (e){
                             console.error("整合文件出错");
                             console.log(e);
+                            if (options.error){
+                                options.error(e);
+                            }
                         }
                     }
                 }
                 catch (e){
                     console.error(`上传第 ${this.nowChunk} 时错误!`);
                     console.log(e);
+                    if (options.error){
+                        options.error(e);
+                    }
                 }
             }
         })
